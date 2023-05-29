@@ -36,3 +36,7 @@ compiler/.gradle/*
 
 # Tomcat
 .extract
+
+# php
+composer.lock
+vendor

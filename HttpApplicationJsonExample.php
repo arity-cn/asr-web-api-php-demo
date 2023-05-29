@@ -11,13 +11,12 @@ $accessKeySecret = "accessKey(请替换为正确的accessKeySecret)";
 $appCode = "appCode(请替换为正确的appCode)";
 $channelCode = "channelCode(请替换为正确的channelCode)";
 // http头部
-$headers = array('Content-Type' => 'application/json');
+$headers = array('Content-Type: application/json');
 // 生成签名
 $signResult = generate_signature($accessKey, $accessKeySecret, $appCode);
 // 读取文件并转为base64
 $fileContent = file_get_contents('audio/BAC009S0002W0164.wav');
 $base64Content = base64_encode($fileContent);
-echo $base64Content . "\n";
 // 构建请求参数
 $data = array(
     'btId' => $btId,
@@ -33,6 +32,8 @@ $data = array(
 // 发送http请求
 $ch = curl_init();
 curl_setopt($ch, CURLOPT_URL, $url);
+curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, FALSE);
+curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
 curl_setopt($ch, CURLOPT_POST, 1);
 curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
 curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
@@ -46,7 +47,7 @@ if ($httpCode == 200) {
     if ($response_data['success']) {
         echo "语音识别结果: " . $response_data['data']['audioText'] . "\n";
     } else {
-        echo "请求异常: " . print_r($response_data, true) . "\n";
+        echo "请求异常: " . $response . "\n";
     }
 } else {
     echo "请求异常, httpCode: " . $httpCode . "\n";

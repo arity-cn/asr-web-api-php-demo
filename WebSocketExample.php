@@ -52,12 +52,15 @@ function build_end_frame() {
 }
 
 // 处理验证结果报文
-function after_process_verify($ws, $message_obj) {
+function after_process_verify($ws, $message_obj): bool {
     if ($message_obj->status == 'ok') {
         echo "校验通过，requestId: {$message_obj->requestId}, code: {$message_obj->code}\n";
         $ws->send(build_start_frame());
+        return false;
     } else {
-        echo "校验失败，requestId: {$message_obj->requestId}, code: {$message_obj->code}, message: {$message_obj->message}\n";
+        echo "校验失败，code: {$message_obj->code}, message: {$message_obj->message}\n";
+        $ws->close();
+        return true;
     }
 }
 
@@ -68,7 +71,7 @@ function after_process_server_ready($ws, $message_obj) {
         $file_path = "audio/BAC009S0002W0164.wav";
         $handle = fopen($file_path, 'rb');
         while (!feof($handle)) {
-            $chunk = fread($handle, 10240);
+            $chunk = fread($handle, 1024);
             $ws->send($chunk, 'binary');
         }
         fclose($handle);
@@ -110,8 +113,8 @@ function after_process_final_result($ws, $message_obj) {
         $result .= $sentence;
         echo "当前语音识别结果：" . $result . "\n";
     } else {
-        $result[] = $sentence;
-        echo "当前语音识别结果：" . implode('', $result) . "\n";
+        $result = $sentence;
+        echo "当前语音识别结果：" . $result . "\n";
     }
 }
 
@@ -127,12 +130,12 @@ function after_process_speech_end($ws, $message_obj) {
 }
 
 // websocket 消息处理
-function on_message($message) {
+function on_message($message): bool {
     global $ws;
     echo "接收到消息：{$message}\n";
     $message_obj = json_decode($message);
     if ($message_obj->type === 'verify') {
-        after_process_verify($ws, $message_obj);
+        return after_process_verify($ws, $message_obj);
     } elseif ($message_obj->type === 'server_ready') {
         after_process_server_ready($ws, $message_obj);
     } elseif ($message_obj->type === 'partial_result') {
@@ -141,15 +144,9 @@ function on_message($message) {
         after_process_final_result($ws, $message_obj);
     } elseif ($message_obj->type === 'speech_end') {
         after_process_speech_end($ws, $message_obj);
+        return true;
     }
-}
-
-function on_close($code, $reason) {
-    echo "WebSocket连接关闭\n";
-}
-
-function on_error($code, $message) {
-    echo "WebSocket发生异常: {$message}\n";
+    return false;
 }
 
 $url = "wss://k8s.arity.cn/asr/ws";
@@ -163,11 +160,19 @@ $channelCode = "channelCode(请替换为正确的channelCode)";
 $complete_url = get_websocket_url($url, $btId, $accessKey, $accessKeySecret, $appCode, $channelCode);
 echo "构建参数后的url: {$complete_url}\n";
 
-$ws = new Client($complete_url);
-$ws->onMessage = 'on_message';
-$ws->onClose = 'on_close';
-$ws->onError = 'on_error';
-
-$ws->run();
+$ws = new Client($complete_url, array(
+    'ssl' => array(
+        'verify_peer' => false, // 取消验证对等证书
+        'verify_peer_name' => false // 取消验证对等证书名称
+    )
+));
+while (true) {
+    $message = $ws->receive();
+    $end = on_message($message);
+    if ($end) {
+        echo '结束连接';
+        break;
+    }
+}
 
 ?>
