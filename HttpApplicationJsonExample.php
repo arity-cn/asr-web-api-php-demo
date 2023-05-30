@@ -15,7 +15,7 @@ $headers = array('Content-Type: application/json');
 // 生成签名
 $signResult = generate_signature($accessKey, $accessKeySecret, $appCode);
 // 读取文件并转为base64
-$fileContent = file_get_contents('audio/BAC009S0002W0164.wav');
+$fileContent = file_get_contents('audio/ARITY2023S001W0001.wav');
 $base64Content = base64_encode($fileContent);
 // 构建请求参数
 $data = array(

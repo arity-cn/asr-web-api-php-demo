@@ -27,7 +27,7 @@ $data = array(
 // 文件字段名
 $file_field = 'file';
 // 文件路径
-$file_path = 'audio/BAC009S0002W0164.wav';
+$file_path = 'audio/ARITY2023S001W0001.wav';
 
 // 发送http请求
 $ch = curl_init();

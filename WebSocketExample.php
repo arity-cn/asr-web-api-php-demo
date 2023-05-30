@@ -68,7 +68,7 @@ function after_process_verify($ws, $message_obj): bool {
 function after_process_server_ready($ws, $message_obj) {
     echo "处理服务端准备好进行语音识别报文\n";
     if ($message_obj->status == 'ok') {
-        $file_path = "audio/BAC009S0002W0164.wav";
+        $file_path = "audio/ARITY2023S001W0001.wav";
         $handle = fopen($file_path, 'rb');
         while (!feof($handle)) {
             $chunk = fread($handle, 1024);
